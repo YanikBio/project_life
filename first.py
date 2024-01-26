@@ -17,3 +17,17 @@ screen = pg.display.set_mode((WIDTH, HEIGHT))  # initialize new pygame window
 clock = pg.time.Clock()
 
 # writing main loop (what?)
+def main():
+    running = True
+    while running:
+        clock.tick(FPS)  # this loop is max is 60 times per second
+
+        for event in pg.event.get():  # quit the game
+            if event.type == pg.QUIT:
+                running = False
+
+    pg.quit()
+
+
+if __name__ == '__main__': # how I understand, this running, when I start this py file
+    main()
