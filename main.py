@@ -19,6 +19,7 @@ clock = pg.time.Clock()
 
 def gen(num):
     return set([(random.randrange(0, GRID_HEIGHT), random.randrange(0, GRID_WIDTH)) for _ in range(num)])
+    #  don't understand this mechanism
 
 def draw_grid(positions):  # we're drawing our grid in the window (horizantal)
     for position in positions:
@@ -33,10 +34,52 @@ def draw_grid(positions):  # we're drawing our grid in the window (horizantal)
 
     pass
 
+
+def adjust_grid(positions):
+    all_neighbors = set()
+    new_positions = set()
+    for position in positions:
+        neighbors = get_neighbors(position)
+        all_neighbors.update(neighbors)
+
+        neighbors = list(filter(lambda x: x in positions, neighbors))  # if posisitions from neighbors is life?
+
+        if len(neighbors) in [2, 3]:  # if this positons have 2/3 neighbors it's go into next round
+            new_positions.add(position)
+
+    for position in all_neighbors:
+        neighbors = get_neighbors(position)
+        neighbors = list(filter(lambda x: x in positions, neighbors))
+
+        if len(neighbors) == 3:
+            new_positions.add(position)
+
+    return new_positions
+
+
+def get_neighbors(pos):  # looking every cell: life/not alive -- and what we must to do
+    x, y = pos
+    neighbors = []
+    for dx in [-1, 0, 1]:
+        if x + dx < 0 or x + dx > GRID_WIDTH:
+            continue
+        for dy in [-1, 0, 1]:
+            if y + dy < 0 or y + dy > GRID_HEIGHT:
+                continue
+            if dx == 0 and dy == 0:
+                continue
+
+        neighbors.append((x + dx, y + dy))
+
+    return neighbors
+
+
 # writing main loop
 def main():
     running = True
-    playing = False
+    playing = True
+    count = 0
+    update_freq = 120
 
     positions = set()
     positions.add((10, 10))
@@ -44,9 +87,19 @@ def main():
     while running:
         clock.tick(FPS)  # this loop is max is 60 times per second
 
+        if playing:
+            count += 1
+
+        if count >= update_freq:
+            count = 0
+            positions = adjust_grid(positions)
+
+        pg.display.set_caption("Playing" if playing else "Paused")
+
         for event in pg.event.get():  # quit the game
             if event.type == pg.QUIT:
                 running = False
+
             if event.type == pg.MOUSEBUTTONDOWN:  # make a event with mouse click
                 x, y = pg.mouse.get_pos()  # take a position from coorditation of the mouse
                 col = x // TILE_SIZE  # we make a more useful coordination for us
@@ -61,11 +114,14 @@ def main():
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:
                     playing = not playing
-                if event.key == pg.K_c:
-                    playing = False  # what different with "not playing" like we used upper?
-                if event.key == pg.K_g:
-                    positions = gen(random.randrange(2, 5) * GRID_WIDTH)
 
+                if event.key == pg.K_c:
+                    positions = set()
+                    playing = False  # what different with "not playing" like we used upper?
+                    count = 0
+
+                if event.key == pg.K_g:
+                    positions = gen(random.randrange(4, 10) * GRID_WIDTH)
 
         screen.fill(GREY)  # how I understand, we make a collor of screen diferent
         draw_grid(positions)
